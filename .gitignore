@@ -1,0 +1,73 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ---- Django ----
+*.log
+*.pot
+*.pyc
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+static/
+local_settings.py
+
+# ---- Environment ----
+.env
+.env.*
+*.env
+venv/
+venv*/
+ENV/
+env/
+env*/
+.venv/
+.venv*/
+
+# ---- IDE / Editors ----
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# ---- OS Files ----
+.DS_Store
+Thumbs.db
+
+# ---- Migrations ----
+# Uncomment this if you want to ignore all migration files (not always recommended)
+# */migrations/
+# */migrations/*.py
+# !*/migrations/__init__.py
+
+# ---- pytest / coverage ----
+.coverage
+.tox/
+nosetests.xml
+coverage.xml
+htmlcov/
+.pytest_cache/
+
+# ---- mypy / pylint ----
+.mypy_cache/
+.dmypy.json
+.pyre/
+.pytype/
+pylint-report.txt
+pylint-output.txt
+
+# ---- Build / Dist ----
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+MANIFEST
+
+# ---- Backup files ----
+*.bak
+*.swp
+*.tmp
+*.temp

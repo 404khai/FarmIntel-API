@@ -1,0 +1,19 @@
+create a venv(virtual environment)
+python -m venv env
+
+activate env
+env\Scripts\activate
+
+install django
+pip install django
+
+django-admin startproject config .
+
+to run the server
+python manage.py runserver 
+
+migrations
+python manage.py makemigrations
+
+create a user model
+python manage.py startapp users
