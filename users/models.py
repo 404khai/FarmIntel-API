@@ -45,13 +45,16 @@ class User(AbstractUser):
         return f"{self.first_name or ''} {self.last_name or ''}".strip() or self.email
 
 
-# --------------------------------------------------------------------
-#  OTP Model (email verification, login)
-# --------------------------------------------------------------------
+
+
 class EmailOTP(models.Model):
+    PURPOSE_CHOICES = [
+        ("email_verification", "Email Verification"),
+        ("login", "Login"),
+    ]
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="otps")
-    code = models.CharField(max_length=6)
-    purpose = models.CharField(max_length=50, default="email_verification")
+    code = models.CharField(max_length=10)
+    purpose = models.CharField(max_length=30, choices=PURPOSE_CHOICES)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
     used = models.BooleanField(default=False)
@@ -61,19 +64,7 @@ class EmailOTP(models.Model):
 
     def mark_used(self):
         self.used = True
-        self.save(update_fields=["used"])
-
-    @classmethod
-    def create_otp(cls, user, purpose="email_verification"):
-        code = str(uuid.uuid4().int)[:6]
-        return cls.objects.create(
-            user=user,
-            code=code,
-            purpose=purpose,
-            expires_at=timezone.now() + timedelta(minutes=10),
-        )
-
-
+        self.save()
 # --------------------------------------------------------------------
 #  Farmer / Buyer Profiles
 # --------------------------------------------------------------------
