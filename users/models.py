@@ -1,53 +1,92 @@
-# users/models.py
-
-# apps/accounts/models.py
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
 import uuid
+from datetime import timedelta
+
 
 def generate_token():
     return uuid.uuid4().hex
 
+
+# --------------------------------------------------------------------
+#  User Model
+# --------------------------------------------------------------------
 class User(AbstractUser):
-    """
-    Email-first user model. Keep username optional if you used existing code.
-    """
-    firstName = models.CharField(max_length=150, blank=True, null=True)
-    lastName = models.CharField(max_length=150, blank=True, null=True)
+    username = None  # remove username
     email = models.EmailField(unique=True)
+
+    first_name = models.CharField(max_length=150, blank=True, null=True)
+    last_name = models.CharField(max_length=150, blank=True, null=True)
+    phone = models.CharField(max_length=24, blank=True, null=True)
+    is_verified = models.BooleanField(default=False)
+
     ROLE_FARMER = "FARMER"
-    ROLE_COOP = "COOPERATIVE"
     ROLE_BUYER = "BUYER"
+    ROLE_ORG = "ORGANIZATION"
     ROLE_ADMIN = "ADMIN"
     ROLE_CHOICES = [
         (ROLE_FARMER, "Farmer"),
-        (ROLE_COOP, "Cooperative"),
         (ROLE_BUYER, "Buyer"),
+        (ROLE_ORG, "Organization"),
         (ROLE_ADMIN, "Admin"),
     ]
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=ROLE_FARMER)
-    is_verified = models.BooleanField(default=False)  # email verified
-    phone = models.CharField(max_length=24, blank=True, null=True)
 
     USERNAME_FIELD = "email"
-
+    REQUIRED_FIELDS = []
 
     def __str__(self):
         return self.email
 
-# Lightweight farmer profile (optional fields)
+    @property
+    def full_name(self):
+        return f"{self.first_name or ''} {self.last_name or ''}".strip() or self.email
+
+
+# --------------------------------------------------------------------
+#  OTP Model (email verification, login)
+# --------------------------------------------------------------------
+class EmailOTP(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="otps")
+    code = models.CharField(max_length=6)
+    purpose = models.CharField(max_length=50, default="email_verification")
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    used = models.BooleanField(default=False)
+
+    def is_valid(self):
+        return not self.used and timezone.now() < self.expires_at
+
+    def mark_used(self):
+        self.used = True
+        self.save(update_fields=["used"])
+
+    @classmethod
+    def create_otp(cls, user, purpose="email_verification"):
+        code = str(uuid.uuid4().int)[:6]
+        return cls.objects.create(
+            user=user,
+            code=code,
+            purpose=purpose,
+            expires_at=timezone.now() + timedelta(minutes=10),
+        )
+
+
+# --------------------------------------------------------------------
+#  Farmer / Buyer Profiles
+# --------------------------------------------------------------------
 class Farmer(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="farmer")
     location = models.CharField(max_length=255, blank=True)
-    crops = models.JSONField(default=list, blank=True)  # ["Maize","Rice"]
+    crops = models.JSONField(default=list, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.farm_name or self.user.get_full_name() or self.user.email}"
+        return self.user.full_name
 
-# Lightweight buyer profile
+
 class Buyer(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="buyer")
     company_name = models.CharField(max_length=150, blank=True)
@@ -56,56 +95,59 @@ class Buyer(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.company_name or self.user.email
+        return self.company_name or self.user.full_name
 
-# Simple OTP model for email verification or actions
-class EmailOTP(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="otps")
-    code = models.CharField(max_length=10)
+
+# --------------------------------------------------------------------
+#  Organization (Co-op, B2B groups)
+# --------------------------------------------------------------------
+class Organization(models.Model):
+    TYPE_CHOICES = [
+        ("COOP", "Cooperative"),
+        ("B2B", "B2B Organization"),
+    ]
+    name = models.CharField(max_length=150)
+    org_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    description = models.TextField(blank=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="owned_organizations")
     created_at = models.DateTimeField(auto_now_add=True)
-    expires_at = models.DateTimeField()
-    used = models.BooleanField(default=False)
-    purpose = models.CharField(max_length=50, default="email_verification")  # e.g., 'signup', 'reset_password'
+
+    def __str__(self):
+        return f"{self.name} ({self.get_org_type_display()})"
+
+
+# --------------------------------------------------------------------
+#  Membership (Farmer or Buyer member)
+# --------------------------------------------------------------------
+class OrganizationMembership(models.Model):
+    ROLE_CHOICES = [
+        ("OWNER", "Owner"),
+        ("FARMER_MEMBER", "Farmer Member"),
+        ("BUYER_MEMBER", "Buyer Member"),
+    ]
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="memberships")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="memberships")
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+    joined_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("organization", "user")
+
+    def __str__(self):
+        return f"{self.user.email} in {self.organization.name}"
+
+
+# --------------------------------------------------------------------
+#  Invitation Links
+# --------------------------------------------------------------------
+class OrganizationInvitation(models.Model):
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="invitations")
+    invited_email = models.EmailField()
+    role = models.CharField(max_length=20, choices=OrganizationMembership.ROLE_CHOICES)
+    token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    accepted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(default=lambda: timezone.now() + timedelta(days=7))
 
     def is_valid(self):
-        return (not self.used) and (timezone.now() < self.expires_at)
-
-    def mark_used(self):
-        self.used = True
-        self.save()
-
-
-# from django.contrib.auth.models import AbstractUser
-# from django.db import models
-
-# class User(AbstractUser):
-#     class Role(models.TextChoices):
-#         FARMER = "FARMER", "Farmer"
-#         COOPERATIVE = "COOPERATIVE", "Cooperative"
-#         BUYER = "BUYER", "Buyer"
-#         ADMIN = "ADMIN", "Admin"
-
-#     role = models.CharField(max_length=20, choices=Role.choices, default=Role.FARMER)
-#     phone = models.CharField(max_length=20, blank=True, null=True)
-#     is_verified = models.BooleanField(default=False)
-
-#     # users/models.py
-# class FarmerProfile(models.Model):
-#     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="farmer_profile")
-#     farm_name = models.CharField(max_length=100)
-#     location = models.CharField(max_length=150)
-#     crops = models.JSONField(default=list)  # e.g., ["Maize", "Cassava"]
-#     cooperative = models.ForeignKey("cooperatives.Cooperative", on_delete=models.SET_NULL, null=True, blank=True)
-
-# class CooperativeProfile(models.Model):
-#     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="cooperative_profile")
-#     coop_name = models.CharField(max_length=150)
-#     address = models.CharField(max_length=200)
-#     description = models.TextField(blank=True)
-#     members = models.ManyToManyField(User, related_name="cooperative_members", blank=True)
-
-# class BuyerProfile(models.Model):
-#     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="buyer_profile")
-#     company_name = models.CharField(max_length=150)
-#     location = models.CharField(max_length=150)
-#     interested_crops = models.JSONField(default=list)
+        return not self.accepted and timezone.now() < self.expires_at
