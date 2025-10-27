@@ -6,11 +6,8 @@ import uuid
 from datetime import timedelta
 
 
-# def generate_token():
-#     return uuid.uuid4().hex
-
 def generate_token():
-    return uuid.uuid4().hex[:6].upper()  # e.g. 6-digit OTP
+    return uuid.uuid4().hex[:6].upper()  # 6-digit OTP like "9F3B2D"
 
 
 # --------------------------------------------------------------------
@@ -18,20 +15,20 @@ def generate_token():
 # --------------------------------------------------------------------
 class User(AbstractUser):
     email = models.EmailField(unique=True)
-
+    password = models.CharField(max_length=128)
     first_name = models.CharField(max_length=150, blank=True, null=True)
     last_name = models.CharField(max_length=150, blank=True, null=True)
     phone = models.CharField(max_length=24, blank=True, null=True)
+    profile_pic = models.ImageField(upload_to="profile_pics/", blank=True, null=True)
     is_verified = models.BooleanField(default=False)
 
-    
     ROLE_CHOICES = [
         ('farmer', "Farmer"),
         ('buyer', "Buyer"),
         ('org', "Organization"),
         ('admin', "Admin"),
     ]
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=ROLE_FARMER)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='farmer')
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
@@ -44,8 +41,9 @@ class User(AbstractUser):
         return f"{self.first_name or ''} {self.last_name or ''}".strip() or self.email
 
 
-
-
+# --------------------------------------------------------------------
+#  Email OTP Model
+# --------------------------------------------------------------------
 class EmailOTP(models.Model):
     PURPOSE_CHOICES = [
         ("email_verification", "Email Verification"),
@@ -64,6 +62,8 @@ class EmailOTP(models.Model):
     def mark_used(self):
         self.used = True
         self.save()
+
+
 # --------------------------------------------------------------------
 #  Farmer / Buyer Profiles
 # --------------------------------------------------------------------
