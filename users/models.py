@@ -6,15 +6,17 @@ import uuid
 from datetime import timedelta
 
 
+# def generate_token():
+#     return uuid.uuid4().hex
+
 def generate_token():
-    return uuid.uuid4().hex
+    return uuid.uuid4().hex[:6].upper()  # e.g. 6-digit OTP
 
 
 # --------------------------------------------------------------------
 #  User Model
 # --------------------------------------------------------------------
 class User(AbstractUser):
-    username = None  # remove username
     email = models.EmailField(unique=True)
 
     first_name = models.CharField(max_length=150, blank=True, null=True)
@@ -22,15 +24,12 @@ class User(AbstractUser):
     phone = models.CharField(max_length=24, blank=True, null=True)
     is_verified = models.BooleanField(default=False)
 
-    ROLE_FARMER = "FARMER"
-    ROLE_BUYER = "BUYER"
-    ROLE_ORG = "ORGANIZATION"
-    ROLE_ADMIN = "ADMIN"
+    
     ROLE_CHOICES = [
-        (ROLE_FARMER, "Farmer"),
-        (ROLE_BUYER, "Buyer"),
-        (ROLE_ORG, "Organization"),
-        (ROLE_ADMIN, "Admin"),
+        ('farmer', "Farmer"),
+        ('buyer', "Buyer"),
+        ('org', "Organization"),
+        ('admin', "Admin"),
     ]
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=ROLE_FARMER)
 
@@ -50,7 +49,7 @@ class User(AbstractUser):
 class EmailOTP(models.Model):
     PURPOSE_CHOICES = [
         ("email_verification", "Email Verification"),
-        ("login", "Login"),
+        ("reset_password", "Reset Password"),
     ]
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="otps")
     code = models.CharField(max_length=10)
@@ -82,7 +81,7 @@ class Buyer(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="buyer")
     company_name = models.CharField(max_length=150, blank=True)
     location = models.CharField(max_length=255, blank=True)
-    interested_crops = models.JSONField(default=list, blank=True)
+    demanded_crops = models.JSONField(default=list, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -94,8 +93,8 @@ class Buyer(models.Model):
 # --------------------------------------------------------------------
 class Organization(models.Model):
     TYPE_CHOICES = [
-        ("COOP", "Cooperative"),
-        ("B2B", "B2B Organization"),
+        ("coop", "Cooperative"),
+        ("b2b", "B2B Organization"),
     ]
     name = models.CharField(max_length=150)
     org_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
@@ -112,9 +111,9 @@ class Organization(models.Model):
 # --------------------------------------------------------------------
 class OrganizationMembership(models.Model):
     ROLE_CHOICES = [
-        ("OWNER", "Owner"),
-        ("FARMER_MEMBER", "Farmer Member"),
-        ("BUYER_MEMBER", "Buyer Member"),
+        ("owner", "Owner"),
+        ("farmer_member", "Farmer Member"),
+        ("buyer_member", "Buyer Member"),
     ]
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="memberships")
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="memberships")

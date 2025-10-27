@@ -1,81 +1,75 @@
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
+from rest_framework import generics, status
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from django.utils import timezone
-from django.shortcuts import get_object_or_404
-from .models import User, EmailOTP, Organization, OrganizationMembership, OrganizationInvitation
-from .serializers import *
-from django.core.mail import send_mail
+from rest_framework_simplejwt.tokens import RefreshToken
+from google.oauth2 import id_token
+from google.auth.transport import requests
+from django.conf import settings
+from .serializers import (
+    EmailPasswordLoginSerializer,
+    OTPRequestSerializer,
+    OTPVerifySerializer,
+)
+from .models import EmailOTP
+from .utils import send_login_otp
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+def get_tokens_for_user(user):
+    refresh = RefreshToken.for_user(user)
+    return {"refresh": str(refresh), "access": str(refresh.access_token)}
 
 
-class RegisterViewSet(viewsets.GenericViewSet):
-    serializer_class = RegisterSerializer
-    permission_classes = [AllowAny]
+class EmailPasswordLoginView(generics.GenericAPIView):
+    serializer_class = EmailPasswordLoginSerializer
 
-    @action(detail=False, methods=["post"])
-    def register(self, request):
+    def post(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        return Response({"message": "Account created. OTP sent to email."}, status=201)
-
-    @action(detail=False, methods=["post"])
-    def verify_email(self, request):
-        email = request.data.get("email")
-        code = request.data.get("code")
-        user = get_object_or_404(User, email=email)
-        otp = EmailOTP.objects.filter(user=user, code=code, used=False).last()
-        if otp and otp.is_valid():
-            user.is_verified = True
-            user.save()
-            otp.mark_used()
-            return Response({"message": "Email verified successfully."})
-        return Response({"error": "Invalid or expired code."}, status=400)
+        user = serializer.validated_data["user"]
+        tokens = get_tokens_for_user(user)
+        return Response(tokens)
 
 
-class OrganizationViewSet(viewsets.ModelViewSet):
-    queryset = Organization.objects.all()
-    serializer_class = OrganizationSerializer
-    permission_classes = [IsAuthenticated]
+class RequestOTPView(generics.GenericAPIView):
+    serializer_class = OTPRequestSerializer
 
-    def perform_create(self, serializer):
-        org = serializer.save(created_by=self.request.user)
-        OrganizationMembership.objects.create(
-            organization=org, user=self.request.user, role="OWNER"
-        )
-
-    @action(detail=True, methods=["post"])
-    def invite(self, request, pk=None):
-        org = self.get_object()
-        email = request.data.get("email")
-        role = request.data.get("role", "FARMER_MEMBER")
-        invite = OrganizationInvitation.objects.create(
-            organization=org, invited_email=email, role=role
-        )
-        send_mail(
-            subject=f"Invitation to join {org.name}",
-            message=f"You have been invited to join {org.name}. Use token: {invite.token}",
-            from_email="noreply@farmintel.com",
-            recipient_list=[email],
-        )
-        return Response({"message": "Invitation sent."})
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = User.objects.get(email=serializer.validated_data["email"])
+        send_login_otp(user)
+        return Response({"message": "OTP sent to your email."})
 
 
-class InvitationAcceptViewSet(viewsets.GenericViewSet):
-    permission_classes = [AllowAny]
+class VerifyOTPView(generics.GenericAPIView):
+    serializer_class = OTPVerifySerializer
 
-    @action(detail=False, methods=["post"])
-    def accept(self, request):
-        token = request.data.get("token")
-        email = request.data.get("email")
-        invitation = get_object_or_404(OrganizationInvitation, token=token, invited_email=email)
-        if not invitation.is_valid():
-            return Response({"error": "Invalid or expired invitation."}, status=400)
-        user = get_object_or_404(User, email=email)
-        OrganizationMembership.objects.create(
-            organization=invitation.organization, user=user, role=invitation.role
-        )
-        invitation.accepted = True
-        invitation.save()
-        return Response({"message": "Invitation accepted successfully."})
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data["user"]
+        tokens = get_tokens_for_user(user)
+        return Response(tokens)
+
+
+class GoogleAuthView(generics.GenericAPIView):
+    """
+    Accepts an `id_token` from frontend Google login
+    """
+    def post(self, request):
+        token = request.data.get("id_token")
+        try:
+            idinfo = id_token.verify_oauth2_token(token, requests.Request(), settings.GOOGLE_CLIENT_ID)
+            email = idinfo.get("email")
+            first_name = idinfo.get("given_name", "")
+            last_name = idinfo.get("family_name", "")
+            user, created = User.objects.get_or_create(email=email, defaults={
+                "firstName": first_name,
+                "lastName": last_name,
+                "is_verified": True,
+            })
+            tokens = get_tokens_for_user(user)
+            return Response(tokens)
+        except Exception as e:
+            return Response({"error": "Invalid Google token", "details": str(e)}, status=400)
