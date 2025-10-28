@@ -4,7 +4,7 @@ from django.utils import timezone
 from datetime import timedelta
 import uuid
 
-from .models import User, EmailOTP
+from .models import User, EmailOTP, Farmer, Buyer, Organization
 
 
 # --------------------------------------------------------------------
@@ -18,18 +18,34 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         fields = ["email", "password", "role"]
 
     def create(self, validated_data):
+        role = validated_data.get("role", "farmer")
         user = User.objects.create_user(
             email=validated_data["email"],
             password=validated_data["password"],
-            role=validated_data.get("role", "farmer"),
+            role=role,
         )
+
+        # Automatically create role-specific profile
+        if role == "farmer":
+            Farmer.objects.create(user=user)
+        elif role == "buyer":
+            Buyer.objects.create(user=user)
+        elif role == "org":
+            Organization.objects.create(
+                name=f"{user.full_name or user.email}'s Organization",
+                org_type="coop",
+                description="Auto-created organization profile",
+                created_by=user,
+            )
+
         # Generate OTP for email verification
-        otp = EmailOTP.objects.create(
+        EmailOTP.objects.create(
             user=user,
             code=uuid.uuid4().hex[:6].upper(),
             purpose="email_verification",
             expires_at=timezone.now() + timedelta(minutes=10),
         )
+
         # TODO: send otp.code via email
         return user
 
@@ -45,8 +61,8 @@ class LoginSerializer(serializers.Serializer):
         user = authenticate(email=data["email"], password=data["password"])
         if not user:
             raise serializers.ValidationError("Invalid credentials")
-        if not user.is_verified:
-            raise serializers.ValidationError("Email not verified.")
+        # if not user.is_verified:
+        #     raise serializers.ValidationError("Email not verified.")
         return {"user": user}
 
 
@@ -62,9 +78,11 @@ class VerifyOTPSerializer(serializers.Serializer):
             user = User.objects.get(email=data["email"])
         except User.DoesNotExist:
             raise serializers.ValidationError("User not found.")
+
         otp = EmailOTP.objects.filter(user=user, code=data["code"], used=False).last()
         if not otp or not otp.is_valid():
             raise serializers.ValidationError("Invalid or expired OTP.")
+
         otp.mark_used()
         user.is_verified = True
         user.save()
@@ -84,11 +102,13 @@ class ResetPasswordSerializer(serializers.Serializer):
             user = User.objects.get(email=data["email"])
         except User.DoesNotExist:
             raise serializers.ValidationError("User not found.")
+
         otp = EmailOTP.objects.filter(
             user=user, code=data["code"], purpose="reset_password", used=False
         ).last()
         if not otp or not otp.is_valid():
             raise serializers.ValidationError("Invalid or expired OTP.")
+
         otp.mark_used()
         user.set_password(data["new_password"])
         user.save()
