@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 from django.utils import timezone
 import uuid
@@ -10,10 +10,25 @@ def generate_token():
     return uuid.uuid4().hex[:6].upper()  # 6-digit OTP like "9F3B2D"
 
 
+def default_expiry():
+    return timezone.now() + timedelta(days=7)
+
 # --------------------------------------------------------------------
 #  User Model
 # --------------------------------------------------------------------
+
+class UserManager(BaseUserManager):
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError("Email is required")
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
 class User(AbstractUser):
+    username = None
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=128)
     first_name = models.CharField(max_length=150, blank=True, null=True)
@@ -21,6 +36,8 @@ class User(AbstractUser):
     phone = models.CharField(max_length=24, blank=True, null=True)
     profile_pic = models.ImageField(upload_to="profile_pics/", blank=True, null=True)
     is_verified = models.BooleanField(default=False)
+
+    objects = UserManager()
 
     ROLE_CHOICES = [
         ('farmer', "Farmer"),
@@ -137,7 +154,8 @@ class OrganizationInvitation(models.Model):
     token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     accepted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    expires_at = models.DateTimeField(default=lambda: timezone.now() + timedelta(days=7))
+    expires_at = models.DateTimeField(default=default_expiry)
 
     def is_valid(self):
         return not self.accepted and timezone.now() < self.expires_at
+    
