@@ -4,7 +4,8 @@ from django.utils import timezone
 from datetime import timedelta
 import uuid
 
-from .models import User, EmailOTP, Farmer, Buyer, Organization
+from .models import User, EmailOTP, Farmer, Buyer
+from organizations.models import Organization
 
 
 # --------------------------------------------------------------------
