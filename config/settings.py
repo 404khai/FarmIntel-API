@@ -145,6 +145,10 @@ STATIC_URL = 'static/'
 
 APPEND_SLASH = False
 
+PAYSTACK_SECRET_KEY = config('PAYSTACK_SECRET_KEY')  # set in env
+# optional public key (for frontend)
+PAYSTACK_PUBLIC_KEY = config('PAYSTACK_PUBLIC_KEY', default="")
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
