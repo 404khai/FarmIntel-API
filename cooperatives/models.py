@@ -5,7 +5,6 @@ from users.models import User
 class Cooperative(models.Model):
     name = models.CharField(max_length=120)
     description = models.TextField(blank=True)
-    location = models.CharField(max_length=150)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="created_cooperatives")
     members = models.ManyToManyField(User, related_name="joined_cooperatives", blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
