@@ -40,8 +40,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'users',
-    'notifications',
-    'organizations'
 ]
 
 # Django REST Framework and JWT configuration
