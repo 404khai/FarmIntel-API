@@ -5,12 +5,9 @@ from datetime import timedelta
 import uuid
 
 from .models import User, EmailOTP, Farmer, Buyer
-from organizations.models import Organization
+from organizations.models import B2BOrganization, B2BMembership
 
 
-# --------------------------------------------------------------------
-#  Registration Serializer
-# --------------------------------------------------------------------
 class UserRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
 
@@ -26,17 +23,26 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             role=role,
         )
 
-        # Automatically create role-specific profile
+        # Auto-create profile depending on role
         if role == "farmer":
             Farmer.objects.create(user=user)
+
         elif role == "buyer":
             Buyer.objects.create(user=user)
+
         elif role == "org":
-            Organization.objects.create(
+            # Create a new B2B organization
+            org = B2BOrganization.objects.create(
                 name=f"{user.full_name or user.email}'s Organization",
-                org_type="coop",
-                description="Auto-created organization profile",
+                description="Auto-created B2B organization profile",
                 created_by=user,
+            )
+
+            # Make user the owner
+            B2BMembership.objects.create(
+                organization=org,
+                user=user,
+                role="owner"
             )
 
         # Generate OTP for email verification
@@ -47,79 +53,6 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             expires_at=timezone.now() + timedelta(minutes=10),
         )
 
-        # TODO: send otp.code via email
         return user
 
 
-# --------------------------------------------------------------------
-#  Login Serializer
-# --------------------------------------------------------------------
-class LoginSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    password = serializers.CharField(write_only=True)
-
-    def validate(self, data):
-        user = authenticate(email=data["email"], password=data["password"])
-        if not user:
-            raise serializers.ValidationError("Invalid credentials")
-        # if not user.is_verified:
-        #     raise serializers.ValidationError("Email not verified.")
-        return {"user": user}
-
-
-# --------------------------------------------------------------------
-#  OTP Verification
-# --------------------------------------------------------------------
-class VerifyOTPSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    code = serializers.CharField(max_length=10)
-
-    def validate(self, data):
-        try:
-            user = User.objects.get(email=data["email"])
-        except User.DoesNotExist:
-            raise serializers.ValidationError("User not found.")
-
-        otp = EmailOTP.objects.filter(user=user, code=data["code"], used=False).last()
-        if not otp or not otp.is_valid():
-            raise serializers.ValidationError("Invalid or expired OTP.")
-
-        otp.mark_used()
-        user.is_verified = True
-        user.save()
-        return user
-
-
-# --------------------------------------------------------------------
-#  Password Reset
-# --------------------------------------------------------------------
-class ResetPasswordSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    code = serializers.CharField(max_length=10)
-    new_password = serializers.CharField(write_only=True)
-
-    def validate(self, data):
-        try:
-            user = User.objects.get(email=data["email"])
-        except User.DoesNotExist:
-            raise serializers.ValidationError("User not found.")
-
-        otp = EmailOTP.objects.filter(
-            user=user, code=data["code"], purpose="reset_password", used=False
-        ).last()
-        if not otp or not otp.is_valid():
-            raise serializers.ValidationError("Invalid or expired OTP.")
-
-        otp.mark_used()
-        user.set_password(data["new_password"])
-        user.save()
-        return user
-
-
-# --------------------------------------------------------------------
-#  Profile Update Serializer
-# --------------------------------------------------------------------
-class UserProfileUpdateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ["first_name", "last_name", "phone", "profile_pic"]
