@@ -24,5 +24,6 @@ urlpatterns = [
     path("billing/", include("billing.urls")),
     path("cooperatives/", include("cooperatives.urls")),
     path("notifications/", include("notifications.urls")),
+    path("detector/", include("detector.urls")),
     # path("pests/", include("pest_detection.urls")),
 ]

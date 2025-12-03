@@ -44,7 +44,8 @@ INSTALLED_APPS = [
     'billing',
     'emails',
     'cooperatives',
-    'notifications'
+    'notifications',
+    'detector'
 ]
 
 # Django REST Framework and JWT configuration
