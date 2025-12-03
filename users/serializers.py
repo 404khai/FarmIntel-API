@@ -3,7 +3,8 @@ from django.contrib.auth import authenticate
 from django.utils import timezone
 from datetime import timedelta
 import uuid
-from .models import User, EmailOTP, Farmer, Buyer
+from .models import User, Farmer, Buyer
+from emails.models import EmailOTP
 from organizations.models import B2BOrganization as Organization
 
 

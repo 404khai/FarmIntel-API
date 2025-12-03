@@ -17,7 +17,7 @@ from .serializers import (
     ResetPasswordSerializer,
     UserProfileUpdateSerializer,
 )
-from .models import EmailOTP
+from emails.models import EmailOTP
 from .utils import send_login_otp  # optional helper for sending OTPs via email
 
 

@@ -41,6 +41,10 @@ INSTALLED_APPS = [
     'rest_framework',
     'users',
     'organizations',
+    'billing',
+    'emails',
+    'cooperatives',
+    'notifications'
 ]
 
 # Django REST Framework and JWT configuration

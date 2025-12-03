@@ -21,7 +21,8 @@ urlpatterns = [
     path('admin/', admin.site.urls), 
     path('users/', include('users.urls')),
     path("orgs/", include("organizations.urls")),
-    #path("api/billing/", include("billing.urls")),
-    # path("notifications/", include("notifications.urls")),
+    path("billing/", include("billing.urls")),
+    path("cooperatives/", include("cooperatives.urls")),
+    path("notifications/", include("notifications.urls")),
     # path("pests/", include("pest_detection.urls")),
 ]
