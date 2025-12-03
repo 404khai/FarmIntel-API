@@ -3,7 +3,9 @@ from django.contrib.auth import authenticate
 from django.utils import timezone
 from datetime import timedelta
 import uuid
-from .models import User, EmailOTP, Farmer, Buyer
+from .models import User, Farmer, Buyer
+from emails.models import EmailOTP
+from emails.services import EmailService
 from organizations.models import B2BOrganization as Organization
 
 
@@ -39,15 +41,22 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             )
 
         # Generate OTP for email verification
+        otp_code = uuid.uuid4().hex[:6].upper()
         EmailOTP.objects.create(
             user=user,
-            code=uuid.uuid4().hex[:6].upper(),
+            code=otp_code,
             purpose="email_verification",
             expires_at=timezone.now() + timedelta(minutes=10),
         )
 
-        # TODO: send otp.code via email
+        # Send welcome email
+        EmailService.send_welcome_email(user)
+        
+        # Send OTP email for verification
+        EmailService.send_otp_email(user, otp_code, purpose="email_verification")
+
         return user
+
 
 
 # --------------------------------------------------------------------

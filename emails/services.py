@@ -1,0 +1,154 @@
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.conf import settings
+from django.utils.html import strip_tags
+from email.mime.image import MIMEImage
+import os
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+class EmailService:
+    """
+    Service class for sending emails with HTML templates
+    """
+    
+    @staticmethod
+    def _attach_logo(email_message):
+        """
+        Attach the FarmIntel logo to the email message
+        """
+        logo_path = os.path.join(settings.BASE_DIR, 'emails', 'static', 'emails', 'logo.png')
+        
+        if os.path.exists(logo_path):
+            with open(logo_path, 'rb') as f:
+                logo_data = f.read()
+                logo = MIMEImage(logo_data)
+                logo.add_header('Content-ID', '<logo>')
+                logo.add_header('Content-Disposition', 'inline', filename='logo.png')
+                email_message.attach(logo)
+        else:
+            logger.warning(f"Logo file not found at {logo_path}")
+    
+    @staticmethod
+    def send_welcome_email(user):
+        """
+        Send a welcome email to a newly registered user
+        
+        Args:
+            user: User instance
+            
+        Returns:
+            bool: True if email sent successfully, False otherwise
+        """
+        try:
+            subject = "Welcome to FarmIntel! 🌱"
+            from_email = settings.DEFAULT_FROM_EMAIL
+            to_email = [user.email]
+            
+            # Context for the template
+            context = {
+                'user': user,
+                'app_url': getattr(settings, 'APP_URL', 'https://farmintel.com'),
+                'current_year': 2025,
+            }
+            
+            # Render HTML content
+            html_content = render_to_string('emails/welcome_email.html', context)
+            
+            # Create plain text version (fallback)
+            text_content = strip_tags(html_content)
+            
+            # Create email message
+            email = EmailMultiAlternatives(
+                subject=subject,
+                body=text_content,
+                from_email=from_email,
+                to=to_email
+            )
+            
+            # Attach HTML version
+            email.attach_alternative(html_content, "text/html")
+            
+            # Attach logo
+            EmailService._attach_logo(email)
+            
+            # Send email
+            email.send(fail_silently=False)
+            
+            logger.info(f"Welcome email sent successfully to {user.email}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to send welcome email to {user.email}: {str(e)}")
+            return False
+    
+    @staticmethod
+    def send_otp_email(user, otp_code, purpose="email_verification"):
+        """
+        Send an OTP email to a user
+        
+        Args:
+            user: User instance
+            otp_code: The OTP code to send
+            purpose: Purpose of the OTP (email_verification or reset_password)
+            
+        Returns:
+            bool: True if email sent successfully, False otherwise
+        """
+        try:
+            # Determine subject based on purpose
+            if purpose == "reset_password":
+                subject = "Reset Your FarmIntel Password"
+                message = f"""
+Hello {user.first_name or 'there'},
+
+You requested to reset your password for your FarmIntel account.
+
+Your password reset code is: {otp_code}
+
+This code will expire in 10 minutes.
+
+If you didn't request this, please ignore this email.
+
+Best regards,
+The FarmIntel Team
+                """
+            else:
+                subject = "Verify Your FarmIntel Email"
+                message = f"""
+Hello {user.first_name or 'there'},
+
+Thank you for signing up with FarmIntel!
+
+Your email verification code is: {otp_code}
+
+This code will expire in 10 minutes.
+
+If you didn't create this account, please ignore this email.
+
+Best regards,
+The FarmIntel Team
+                """
+            
+            from_email = settings.DEFAULT_FROM_EMAIL
+            to_email = [user.email]
+            
+            # Create email message
+            email = EmailMultiAlternatives(
+                subject=subject,
+                body=message,
+                from_email=from_email,
+                to=to_email
+            )
+            
+            # Send email
+            email.send(fail_silently=False)
+            
+            logger.info(f"OTP email ({purpose}) sent successfully to {user.email}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to send OTP email to {user.email}: {str(e)}")
+            return False

@@ -1,7 +1,7 @@
 from django.core.mail import send_mail
 from django.utils import timezone
 from datetime import timedelta
-from .models import EmailOTP
+from emails.models import EmailOTP
 from .models import generate_token
 
 def send_login_otp(user):

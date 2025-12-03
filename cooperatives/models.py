@@ -4,6 +4,7 @@ from users.models import User
 class Cooperative(models.Model):
     name = models.CharField(max_length=120)
     description = models.TextField(blank=True)
+    img = models.ImageField()
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="created_cooperatives")
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -13,8 +14,9 @@ class Cooperative(models.Model):
 
 class CooperativeMembership(models.Model):
     ROLE_CHOICES = [
-        ("farmer", "Farmer"),
-        ("buyer", "Buyer"),
+        ("owner", "Owner"),
+        ("member_farmer", "Member Farmer"),
+        ("member_buyer", "Member Buyer"),
         ("manager", "Manager"),
     ]
 

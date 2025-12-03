@@ -42,7 +42,6 @@ class User(AbstractUser):
     ROLE_CHOICES = [
         ('farmer', "Farmer"),
         ('buyer', "Buyer"),
-        ('org', "Organization"),
         ('admin', "Admin"),
     ]
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='farmer')
@@ -57,28 +56,6 @@ class User(AbstractUser):
     def full_name(self):
         return f"{self.first_name or ''} {self.last_name or ''}".strip() or self.email
 
-
-# --------------------------------------------------------------------
-#  Email OTP Model
-# --------------------------------------------------------------------
-class EmailOTP(models.Model):
-    PURPOSE_CHOICES = [
-        ("email_verification", "Email Verification"),
-        ("reset_password", "Reset Password"),
-    ]
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="otps")
-    code = models.CharField(max_length=10)
-    purpose = models.CharField(max_length=30, choices=PURPOSE_CHOICES)
-    created_at = models.DateTimeField(auto_now_add=True)
-    expires_at = models.DateTimeField()
-    used = models.BooleanField(default=False)
-
-    def is_valid(self):
-        return not self.used and timezone.now() < self.expires_at
-
-    def mark_used(self):
-        self.used = True
-        self.save()
 
 
 # --------------------------------------------------------------------
@@ -104,6 +81,9 @@ class Buyer(models.Model):
     def __str__(self):
         return self.company_name or self.user.full_name
 
+
+
+    
 
 
 

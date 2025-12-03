@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to FarmIntel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f4f7f6;
+            padding: 20px;
+        }
+        
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 40px 30px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .logo {
+            max-width: 180px;
+            height: auto;
+            margin-bottom: 20px;
+        }
+        
+        .header h1 {
+            color: #ffffff;
+            font-size: 28px;
+            font-weight: 700;
+            margin: 0;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .content {
+            background: #ffffff;
+            padding: 50px 40px;
+        }
+        
+        .greeting {
+            font-size: 24px;
+            color: #2d3748;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        
+        .message {
+            color: #4a5568;
+            font-size: 16px;
+            line-height: 1.8;
+            margin-bottom: 30px;
+        }
+        
+        .highlight-box {
+            background: linear-gradient(135deg, #f6f8fb 0%, #e9f0f5 100%);
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 30px 0;
+        }
+        
+        .highlight-box h3 {
+            color: #2d3748;
+            font-size: 18px;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+        
+        .highlight-box ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .highlight-box li {
+            color: #4a5568;
+            padding: 8px 0;
+            padding-left: 24px;
+            position: relative;
+        }
+        
+        .highlight-box li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #48bb78;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+            text-decoration: none;
+            padding: 16px 40px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 16px;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+        
+        .footer {
+            background: #2d3748;
+            color: #a0aec0;
+            padding: 30px 40px;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        .footer p {
+            margin: 8px 0;
+        }
+        
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
+            margin: 30px 0;
+        }
+        
+        .social-links {
+            margin-top: 20px;
+        }
+        
+        .social-links a {
+            display: inline-block;
+            margin: 0 8px;
+            color: #a0aec0;
+            text-decoration: none;
+            font-size: 12px;
+        }
+        
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                border-radius: 0;
+            }
+            
+            .content {
+                padding: 30px 20px;
+            }
+            
+            .header {
+                padding: 30px 20px;
+            }
+            
+            .greeting {
+                font-size: 20px;
+            }
+            
+            .cta-button {
+                display: block;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- Header Section -->
+        <div class="header">
+            <img src="cid:logo" alt="FarmIntel Logo" class="logo">
+            <h1>Welcome to FarmIntel! 🌱</h1>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="content">
+            <div class="greeting">
+                Hello {{ user.first_name|default:"Farmer" }}! 👋
+            </div>
+            
+            <div class="message">
+                We're thrilled to have you join the FarmIntel community! You've just taken the first step towards smarter, more efficient farming with cutting-edge agricultural intelligence.
+            </div>
+            
+            <div class="message">
+                Your account has been successfully created with the email: <strong>{{ user.email }}</strong>
+            </div>
+            
+            <div class="highlight-box">
+                <h3>🚀 What's Next?</h3>
+                <ul>
+                    <li>Complete your profile to personalize your experience</li>
+                    <li>Explore our crop management tools</li>
+                    <li>Connect with other farmers and buyers</li>
+                    <li>Access real-time agricultural insights</li>
+                    <li>Join or create cooperatives</li>
+                </ul>
+            </div>
+            
+            <div style="text-align: center;">
+                <a href="{{ app_url }}" class="cta-button">Get Started Now</a>
+            </div>
+            
+            <div class="divider"></div>
+            
+            <div class="message" style="font-size: 14px; color: #718096;">
+                <strong>Need help?</strong> Our support team is here for you. Feel free to reach out at 
+                <a href="mailto:support@farmintel.com" style="color: #667eea; text-decoration: none;">support@farmintel.com</a>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <p><strong>FarmIntel</strong> - Empowering Agriculture with Intelligence</p>
+            <p>© {{ current_year }} FarmIntel. All rights reserved.</p>
+            <div class="social-links">
+                <a href="#">Twitter</a> • 
+                <a href="#">Facebook</a> • 
+                <a href="#">LinkedIn</a> • 
+                <a href="#">Instagram</a>
+            </div>
+            <p style="margin-top: 20px; font-size: 12px;">
+                You're receiving this email because you signed up for FarmIntel.<br>
+                If you didn't create this account, please ignore this email.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
