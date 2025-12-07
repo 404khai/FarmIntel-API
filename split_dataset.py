@@ -5,8 +5,8 @@ import shutil
 import random
 from pathlib import Path
 
-DATASET_DIR = "detector/PlantVillage"   # your original downloaded dataset
-OUTPUT_DIR = "detector/PlantVillage2"        # where train/ and val/ will be created
+DATASET_DIR = "detector/datasets/PlantVillage"   # your original downloaded dataset
+OUTPUT_DIR = "detector/datasets/PlantVillage2"        # where train/ and val/ will be created
 
 TRAIN_RATIO = 0.8  # 80% train, 20% val
 

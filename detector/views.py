@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .serializers import ImageUploadSerializer
-from .predictor import model
+from .predictors.disease_predictor import model
 
 class DiseaseDetectView(APIView):
 
