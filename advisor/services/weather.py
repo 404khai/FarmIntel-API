@@ -11,6 +11,7 @@ def fetch_daily_forecast(latitude: float, longitude: float, days: int = 14):
             "temperature_2m_min",
             "precipitation_sum",
             "sunshine_duration",
+            "relative_humidity_2m_mean",
         ],
         "timezone": "auto",
     }
@@ -28,7 +29,7 @@ def fetch_daily_forecast(latitude: float, longitude: float, days: int = 14):
                 "tmin": daily.get("temperature_2m_min", [None] * len(dates))[i],
                 "precip_mm": daily.get("precipitation_sum", [None] * len(dates))[i],
                 "sunshine_s": daily.get("sunshine_duration", [None] * len(dates))[i],
+                "humidity_mean": daily.get("relative_humidity_2m_mean", [None] * len(dates))[i],
             }
         )
     return out
-
