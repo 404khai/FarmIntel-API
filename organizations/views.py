@@ -6,7 +6,7 @@ from django.conf import settings
 import requests
 import uuid
 
-from .models import B2BOrganization
+from .models import B2BOrganization, ApiKey
 from billing.models import Plan, Subscription, Transaction
 from .serializers import OrgPlanSerializer, OrgSubscriptionSerializer
 
@@ -91,3 +91,29 @@ class OrgPaystackWebhookView(APIView):
             sub.save()
 
         return Response({"status": "ok"})
+
+
+class CreateApiKeyView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, org_id):
+        org = get_object_or_404(B2BOrganization, id=org_id)
+        if org.created_by != request.user:
+            return Response({"error": "Only owner can create API keys"}, status=403)
+        import secrets
+        token = secrets.token_hex(24)
+        key = f"org_{token}"
+        label = request.data.get("label") or "default"
+        apikey = ApiKey.objects.create(organization=org, key=key, label=label)
+        return Response({"key": apikey.key, "label": apikey.label, "active": apikey.active})
+
+
+class ListApiKeysView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, org_id):
+        org = get_object_or_404(B2BOrganization, id=org_id)
+        if org.created_by != request.user:
+            return Response({"error": "Only owner can view API keys"}, status=403)
+        items = [{"key": k.key, "label": k.label, "active": k.active, "created_at": k.created_at} for k in org.api_keys.all()]
+        return Response(items)

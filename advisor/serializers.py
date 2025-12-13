@@ -19,7 +19,6 @@ class SensorDataSerializer(serializers.Serializer):
 class FarmDataSerializer(serializers.Serializer):
     soil_type = serializers.CharField(required=True)
     crop_type = serializers.CharField(required=True)
-    location = LocationSerializer(required=True)
+    location = LocationSerializer(required=False)
     field_area_hectares = serializers.FloatField(required=False)
     sensor_data = SensorDataSerializer(required=False)
-
