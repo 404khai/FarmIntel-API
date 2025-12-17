@@ -133,7 +133,8 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["first_name", "last_name", "phone", "profile_pic", "country", "state", "city", "farm_name", "crops", "company_name"]
+        fields = ["first_name", "last_name", "phone", "profile_pic_url", "country", "state", "city", "farm_name", "crops", "company_name"]
+
 
     def update(self, instance, validated_data):
         # Extract role-specific data

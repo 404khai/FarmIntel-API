@@ -61,7 +61,16 @@ class LoginView(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data["user"]
         tokens = get_tokens_for_user(user)
-        return Response(tokens, status=status.HTTP_200_OK)
+        return Response({
+            "message": "Login successful",
+            "tokens": tokens,
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "full_name": user.full_name,
+                "role": user.role
+            }
+        }, status=status.HTTP_200_OK)
 
 
 # --------------------------------------------------------------------
@@ -149,8 +158,8 @@ class GoogleAuthView(generics.GenericAPIView):
             )
 
             # If Google provides a profile picture, attach it once
-            if picture and not user.profile_pic:
-                user.profile_pic = picture
+            if picture and not user.profile_pic_url:
+                user.profile_pic_url = picture
                 user.save()
 
             tokens = get_tokens_for_user(user)

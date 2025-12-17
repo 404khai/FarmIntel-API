@@ -34,7 +34,7 @@ class User(AbstractUser):
     first_name = models.CharField(max_length=150, blank=True, null=True)
     last_name = models.CharField(max_length=150, blank=True, null=True)
     phone = models.CharField(max_length=24, blank=True, null=True)
-    profile_pic = models.ImageField(upload_to="profile_pics/", blank=True, null=True)
+    profile_pic_url = models.ImageField(upload_to="profile_pics/", blank=True, null=True)
     is_verified = models.BooleanField(default=False)
     country = models.CharField(max_length=120, blank=True, null=True)
     state = models.CharField(max_length=120, blank=True, null=True)
