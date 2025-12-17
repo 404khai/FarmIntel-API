@@ -12,6 +12,7 @@ def default_expiry():
 class B2BOrganization(models.Model):
     name = models.CharField(max_length=150)
     description = models.TextField(blank=True)
+    logo = models.ImageField(upload_to="org_logos/", blank=True, null=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

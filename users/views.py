@@ -18,7 +18,7 @@ from .serializers import (
     UserProfileUpdateSerializer,
 )
 from emails.models import EmailOTP
-from .utils import send_login_otp  # optional helper for sending OTPs via email
+from emails.services import EmailService
 
 
 User = get_user_model()
@@ -85,8 +85,8 @@ class RequestOTPView(generics.GenericAPIView):
             expires_at=timezone.now() + timedelta(minutes=10),
         )
 
-        # You can send the OTP here
-        send_login_otp(user, otp.code)  # Example utility
+        # Send OTP via email service
+        EmailService.send_otp_email(user, otp.code, purpose=purpose)
         return Response({"message": "OTP sent to your email."}, status=200)
 
 

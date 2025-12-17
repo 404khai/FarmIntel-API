@@ -35,7 +35,6 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         elif role == "org":
             Organization.objects.create(
                 name=f"{user.full_name or user.email}'s Organization",
-                org_type="coop",
                 description="Auto-created organization profile",
                 created_by=user,
             )

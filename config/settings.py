@@ -46,7 +46,10 @@ INSTALLED_APPS = [
     'emails',
     'cooperatives',
     'notifications',
-    'advisor'
+    'advisor',
+    'cloudinary',
+    'cloudinary_storage',
+    'crops'
 ]
 
 # Django REST Framework and JWT configuration
@@ -176,6 +179,17 @@ APPEND_SLASH = False
 PAYSTACK_SECRET_KEY = config('PAYSTACK_SECRET_KEY')  # set in env
 # optional public key (for frontend)
 PAYSTACK_PUBLIC_KEY = config('PAYSTACK_PUBLIC_KEY', default="")
+
+# --------------------------------------------------------------------
+#  Media & Cloudinary
+# --------------------------------------------------------------------
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME', default=''),
+    'API_KEY': config('CLOUDINARY_API_KEY', default=''),
+    'API_SECRET': config('CLOUDINARY_API_SECRET', default=''),
+}
+MEDIA_URL = '/media/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
