@@ -16,6 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from utils.views import CloudinaryUploadView
 
 urlpatterns = [
     path('admin/', admin.site.urls), 
@@ -27,4 +28,5 @@ urlpatterns = [
     path("detector/", include("detector.urls")),
     path("advisor/", include("advisor.urls")),
     path("crops/", include("crops.urls")),
+    path("upload/", CloudinaryUploadView.as_view(), name="cloudinary_upload"),
 ]

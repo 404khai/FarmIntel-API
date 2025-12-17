@@ -36,7 +36,7 @@ def verify_profile_update():
         "crops": ["Corn", "Wheat"]
     }
     
-    response = client.patch('/users/me', data=payload, format='json')
+    response = client.patch('/auth/profile/update/', data=payload, format='json')
     
     if response.status_code != 200:
         print(f"FAILED: Status code {response.status_code}")

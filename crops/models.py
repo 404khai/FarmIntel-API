@@ -5,7 +5,7 @@ from users.models import Farmer
 
 class Crop(models.Model):
     farmer = models.ForeignKey(Farmer, on_delete=models.CASCADE, related_name="farmer_crops")
-    image = models.ImageField(upload_to="crop_images/", blank=True, null=True)
+    image_url = models.ImageField(upload_to="crop_images/", blank=True, null=True)
     name = models.CharField(max_length=150)
     variety = models.CharField(max_length=150, blank=True)
     quantity_kg = models.DecimalField(max_digits=12, decimal_places=2, default=0)
