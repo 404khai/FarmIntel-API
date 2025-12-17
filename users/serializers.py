@@ -127,6 +127,43 @@ class ResetPasswordSerializer(serializers.Serializer):
 #  Profile Update Serializer
 # --------------------------------------------------------------------
 class UserProfileUpdateSerializer(serializers.ModelSerializer):
+    farm_name = serializers.CharField(required=False, allow_blank=True)
+    crops = serializers.ListField(child=serializers.CharField(), required=False)
+    company_name = serializers.CharField(required=False, allow_blank=True)
+
     class Meta:
         model = User
-        fields = ["first_name", "last_name", "phone", "profile_pic", "country", "state", "city"]
+        fields = ["first_name", "last_name", "phone", "profile_pic", "country", "state", "city", "farm_name", "crops", "company_name"]
+
+    def update(self, instance, validated_data):
+        # Extract role-specific data
+        farm_name = validated_data.pop("farm_name", None)
+        crops = validated_data.pop("crops", None)
+        company_name = validated_data.pop("company_name", None)
+
+        # Update User fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        # Update specialized profile
+        if instance.role == "farmer":
+            # Ensure farmer profile exists (it should, but safety first)
+            farmer_profile, _ = Farmer.objects.get_or_create(user=instance)
+            changed = False
+            if farm_name is not None:
+                farmer_profile.farm_name = farm_name
+                changed = True
+            if crops is not None:
+                farmer_profile.crops = crops
+                changed = True
+            if changed:
+                farmer_profile.save()
+
+        elif instance.role == "buyer":
+            buyer_profile, _ = Buyer.objects.get_or_create(user=instance)
+            if company_name is not None:
+                buyer_profile.company_name = company_name
+                buyer_profile.save()
+
+        return instance
