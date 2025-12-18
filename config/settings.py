@@ -47,9 +47,10 @@ INSTALLED_APPS = [
     'emails',
     'cooperatives',
     'notifications',
-    'advisor',
     'cloudinary',
-    'crops'
+    'crops',
+    'analytics',
+    'orders'
 ]
 
 # Django REST Framework and JWT configuration

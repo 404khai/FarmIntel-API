@@ -207,3 +207,11 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
                 buyer_profile.save()
 
         return instance
+
+# --------------------------------------------------------------------
+#  Basic User Serializer
+# --------------------------------------------------------------------
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "email", "first_name", "last_name", "phone", "profile_pic_url", "role"]
