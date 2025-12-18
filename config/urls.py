@@ -26,7 +26,7 @@ urlpatterns = [
     path("cooperatives/", include("cooperatives.urls")),
     path("notifications/", include("notifications.urls")),
     path("detector/", include("detector.urls")),
-    path("advisor/", include("advisor.urls")),
     path("crops/", include("crops.urls")),
+    path("analytics/", include("analytics.urls")),
     path("upload/", CloudinaryUploadView.as_view(), name="cloudinary_upload"),
 ]

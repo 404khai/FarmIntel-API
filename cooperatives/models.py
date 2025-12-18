@@ -4,7 +4,7 @@ from users.models import User
 class Cooperative(models.Model):
     name = models.CharField(max_length=120)
     description = models.TextField(blank=True)
-    image_url = models.ImageField(upload_to="coop_images/")
+    image_url = models.ImageField(upload_to="coop_images/", blank=True, null=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="created_cooperatives")
     created_at = models.DateTimeField(auto_now_add=True)
 
