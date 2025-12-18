@@ -133,8 +133,47 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["first_name", "last_name", "phone", "profile_pic_url", "country", "state", "city", "farm_name", "crops", "company_name"]
+        fields = ["id", "email", "role", "first_name", "last_name", "phone", "profile_pic_url", "country", "state", "city", "farm_name", "crops", "company_name"]
+        read_only_fields = ["id", "email", "role"]
 
+
+    def to_internal_value(self, data):
+        # multipart/form-data sends everything as strings, including JSON fields like crops
+        # we need to parse them before validation
+        if "crops" in data and isinstance(data["crops"], str):
+            import json
+            try:
+                # If it's a QueryDict (from multipart), we need a mutable copy
+                if hasattr(data, "copy"):
+                    data = data.copy()
+                data["crops"] = json.loads(data["crops"])
+            except (ValueError, TypeError):
+                pass
+
+        # If profile_pic_url is a string, it's the existing Cloudinary URL.
+        # ImageField expects a File, so we remove the string to avoid validation failure.
+        if "profile_pic_url" in data and isinstance(data["profile_pic_url"], str):
+            if hasattr(data, "copy"):
+                data = data.copy()
+            data.pop("profile_pic_url")
+
+        return super().to_internal_value(data)
+
+    def to_representation(self, instance):
+        """Add role-specific data to the response."""
+        data = super().to_representation(instance)
+        
+        if instance.role == "farmer":
+            farmer_profile = getattr(instance, "farmer", None)
+            if farmer_profile:
+                data["farm_name"] = farmer_profile.farm_name
+                data["crops"] = farmer_profile.crops
+        elif instance.role == "buyer":
+            buyer_profile = getattr(instance, "buyer", None)
+            if buyer_profile:
+                data["company_name"] = buyer_profile.company_name
+        
+        return data
 
     def update(self, instance, validated_data):
         # Extract role-specific data
