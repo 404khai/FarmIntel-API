@@ -21,7 +21,7 @@ class TreatmentService:
 
         try:
             genai.configure(api_key=api_key)
-            model = genai.GenerativeModel('gemini-pro')
+            model = genai.GenerativeModel('gemini-2.5-flash')
             
             prompt = f"""
             The user has a plant with a detected disease: "{disease_name}" (Confidence: {confidence:.1%}).
