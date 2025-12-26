@@ -28,5 +28,7 @@ urlpatterns = [
     path("detector/", include("detector.urls")),
     path("crops/", include("crops.urls")),
     path("analytics/", include("analytics.urls")),
+    path("orders/", include("orders.urls")),
+    path("transactions/", include("transactions.urls")),
     path("upload/", CloudinaryUploadView.as_view(), name="cloudinary_upload"),
 ]

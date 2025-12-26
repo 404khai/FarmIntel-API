@@ -50,7 +50,8 @@ INSTALLED_APPS = [
     'cloudinary',
     'crops',
     'analytics',
-    'orders'
+    'orders',
+    'transactions'
 ]
 
 # Django REST Framework and JWT configuration

@@ -152,3 +152,88 @@ The FarmIntel Team
         except Exception as e:
             logger.error(f"Failed to send OTP email to {user.email}: {str(e)}")
             return False
+
+    @staticmethod
+    def send_order_placed_email(order):
+        """Send notification to farmer when a new order is placed."""
+        try:
+            subject = f"New Order Received: {order.crop.name} 📦"
+            context = {
+                'order': order,
+                'farmer': order.farmer.user,
+                'app_url': getattr(settings, 'APP_URL', 'https://farmintel.com'),
+                'current_year': 2025,
+            }
+            html_content = render_to_string('emails/order_placed_email.html', context)
+            text_content = strip_tags(html_content)
+            
+            email = EmailMultiAlternatives(
+                subject=subject,
+                body=text_content,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[order.farmer.user.email]
+            )
+            email.attach_alternative(html_content, "text/html")
+            EmailService._attach_logo(email)
+            email.send(fail_silently=False)
+            return True
+        except Exception as e:
+            logger.error(f"Failed to send order placed email: {str(e)}")
+            return False
+
+    @staticmethod
+    def send_order_status_email(order, status_action):
+        """Send notification to buyer when farmer accepts or declines an order."""
+        try:
+            subject = f"Your Order has been {status_action.capitalize()}! ✅" if status_action == 'accepted' else f"Your Order has been {status_action.capitalize()} ❌"
+            context = {
+                'order': order,
+                'buyer': order.buyer,
+                'status_action': status_action,
+                'app_url': getattr(settings, 'APP_URL', 'https://farmintel.com'),
+                'current_year': 2025,
+            }
+            html_content = render_to_string('emails/order_status_email.html', context)
+            text_content = strip_tags(html_content)
+            
+            email = EmailMultiAlternatives(
+                subject=subject,
+                body=text_content,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[order.buyer.email]
+            )
+            email.attach_alternative(html_content, "text/html")
+            EmailService._attach_logo(email)
+            email.send(fail_silently=False)
+            return True
+        except Exception as e:
+            logger.error(f"Failed to send order status email: {str(e)}")
+            return False
+
+    @staticmethod
+    def send_payment_success_email(order):
+        """Send notification to farmer when buyer makes payment."""
+        try:
+            subject = f"Payment Received for Order #{order.id} 💰"
+            context = {
+                'order': order,
+                'farmer': order.farmer.user,
+                'app_url': getattr(settings, 'APP_URL', 'https://farmintel.com'),
+                'current_year': 2025,
+            }
+            html_content = render_to_string('emails/payment_success_email.html', context)
+            text_content = strip_tags(html_content)
+            
+            email = EmailMultiAlternatives(
+                subject=subject,
+                body=text_content,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[order.farmer.user.email]
+            )
+            email.attach_alternative(html_content, "text/html")
+            EmailService._attach_logo(email)
+            email.send(fail_silently=False)
+            return True
+        except Exception as e:
+            logger.error(f"Failed to send payment success email: {str(e)}")
+            return False

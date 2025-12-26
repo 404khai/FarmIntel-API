@@ -96,6 +96,9 @@ class InitializeOrderPaymentView(APIView):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+from django.db import transaction as db_transaction
+from transactions.models import Wallet, Transaction as FinancialTransaction
+
 class VerifyOrderPaymentView(APIView):
     permission_classes = [permissions.AllowAny] # Paystack webhook or callback
 
@@ -107,23 +110,41 @@ class VerifyOrderPaymentView(APIView):
         try:
             verification_resp = verify_transaction(reference)
             if verification_resp.get('data', {}).get('status') == 'success':
-                tx = get_object_or_404(OrderTransaction, reference=reference)
-                if tx.status != "SUCCESS":
-                    tx.status = "SUCCESS"
-                    tx.paystack_response = verification_resp
-                    tx.save()
-                    
-                    order = tx.order
-                    order.status = "PAID"
-                    order.save()
-                    
-                    # Update crop quantity
-                    crop = order.crop
-                    crop.quantity_kg -= order.quantity
-                    crop.save()
-                    
-                    # Notify farmer of payment
-                    EmailService.send_payment_success_email(order)
+                with db_transaction.atomic():
+                    tx = get_object_or_404(OrderTransaction, reference=reference)
+                    if tx.status != "SUCCESS":
+                        tx.status = "SUCCESS"
+                        tx.paystack_response = verification_resp
+                        tx.save()
+                        
+                        order = tx.order
+                        order.status = "PAID"
+                        order.save()
+                        
+                        # Update crop quantity
+                        crop = order.crop
+                        crop.quantity_kg -= order.quantity
+                        crop.save()
+                        
+                        # Update farmer wallet and create financial transaction
+                        farmer = order.farmer
+                        wallet, _ = Wallet.objects.get_or_create(farmer=farmer)
+                        wallet.balance += order.total_price
+                        wallet.save()
+                        
+                        FinancialTransaction.objects.create(
+                            user=order.buyer,
+                            wallet=wallet,
+                            amount=order.total_price,
+                            reference=reference,
+                            transaction_type="PAYMENT",
+                            status="SUCCESS",
+                            description=f"Payment for Order #{order.id}: {crop.name}",
+                            metadata={"order_id": order.id}
+                        )
+                        
+                        # Notify farmer of payment
+                        EmailService.send_payment_success_email(order)
                 
                 return Response({"message": "Payment verified successfully."})
             else:

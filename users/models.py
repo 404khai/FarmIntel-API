@@ -60,6 +60,11 @@ class User(AbstractUser):
     def full_name(self):
         return f"{self.first_name or ''} {self.last_name or ''}".strip() or self.email
 
+    @property
+    def member_id(self):
+        year = self.date_joined.year if self.date_joined else 2025
+        return f"FI-{year}-{self.id:03d}"
+
 
 
 # --------------------------------------------------------------------

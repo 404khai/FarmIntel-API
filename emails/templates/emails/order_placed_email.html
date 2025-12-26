@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .logo { width: 150px; }
+        .content { margin-bottom: 30px; }
+        .order-details { background-color: #f9f9f9; padding: 15px; border-radius: 5px; }
+        .footer { text-align: center; font-size: 12px; color: #777; }
+        .btn { display: inline-block; padding: 10px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="cid:logo" alt="FarmIntel Logo" class="logo">
+            <h2>New Order Received! 📦</h2>
+        </div>
+        <div class="content">
+            <p>Hello {{ farmer.first_name|default:"Farmer" }},</p>
+            <p>A new order has been placed for your crop: <strong>{{ order.crop.name }}</strong>.</p>
+            
+            <div class="order-details">
+                <p><strong>Order ID:</strong> #{{ order.id }}</p>
+                <p><strong>Quantity:</strong> {{ order.quantity }} kg</p>
+                <p><strong>Total Price:</strong> ₦{{ order.total_price }}</p>
+                <p><strong>Buyer:</strong> {{ order.buyer.full_name }}</p>
+            </div>
+            
+            <p>Please log in to your dashboard to accept or decline this order.</p>
+            <p style="text-align: center;">
+                <a href="{{ app_url }}/dashboard/orders/{{ order.id }}" class="btn">View Order</a>
+            </p>
+        </div>
+        <div class="footer">
+            <p>&copy; {{ current_year }} FarmIntel. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
