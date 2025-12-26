@@ -29,7 +29,10 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
         # Automatically create role-specific profile
         if role == "farmer":
-            Farmer.objects.create(user=user)
+            farmer = Farmer.objects.create(user=user)
+            # Create wallet for farmer
+            from transactions.models import Wallet
+            Wallet.objects.create(farmer=farmer)
         elif role == "buyer":
             Buyer.objects.create(user=user)
         elif role == "org":

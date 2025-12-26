@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from .serializers import ImageUploadSerializer
 from .predictors.disease_predictor import model
+from .services import TreatmentService
 
 class DiseaseDetectView(APIView):
 
@@ -27,9 +28,13 @@ class DiseaseDetectView(APIView):
                     "candidates": predictions
                 }, status=status.HTTP_200_OK)
 
+            # Fetch AI Treatment Plan
+            treatment = TreatmentService.get_treatment_plan(best["label"], best["confidence"])
+
             return Response({
                 "status": "ok",
                 "prediction": best,
+                "treatment": treatment,
                 "alternatives": predictions[1:]
             })
 

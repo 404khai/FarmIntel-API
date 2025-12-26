@@ -49,3 +49,12 @@ class CooperativeViewSet(viewsets.ModelViewSet):
         
         serializer = CooperativeMembershipSerializer(membership)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['get'])
+    def members(self, request, pk=None):
+        cooperative = self.get_object()
+        memberships = cooperative.memberships.all().select_related('user')
+        
+        from .serializers import CooperativeMemberDetailSerializer
+        serializer = CooperativeMemberDetailSerializer(memberships, many=True)
+        return Response(serializer.data)
