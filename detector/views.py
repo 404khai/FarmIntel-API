@@ -30,11 +30,19 @@ class DiseaseDetectView(APIView):
 
             # Fetch AI Treatment Plan
             treatment = TreatmentService.get_treatment_plan(best["label"], best["confidence"])
+            treatment_text = None
+            if isinstance(treatment, dict):
+                if treatment.get("status") == "success":
+                    treatment_text = treatment.get("treatment_plan")
+                else:
+                    treatment_text = treatment.get("message")
+            else:
+                treatment_text = str(treatment)
 
             return Response({
                 "status": "ok",
                 "prediction": best,
-                "treatment": treatment,
+                "treatment": treatment_text,
                 "alternatives": predictions[1:]
             })
 
