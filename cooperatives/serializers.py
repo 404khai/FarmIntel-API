@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from .models import Cooperative, CooperativeMembership
+from crops.models import Crop
+from crops.serializers import CropSerializer
 
 class CooperativeSerializer(serializers.ModelSerializer):
     location = serializers.SerializerMethodField()
@@ -31,17 +33,21 @@ class CooperativeMemberDetailSerializer(serializers.ModelSerializer):
     member_id = serializers.CharField(source='user.member_id', read_only=True)
     role_display = serializers.CharField(source='get_role_display', read_only=True)
     location = serializers.SerializerMethodField()
+    city = serializers.CharField(source='user.city', read_only=True)
+    state = serializers.CharField(source='user.state', read_only=True)
+    user_role = serializers.CharField(source='user.role', read_only=True)
     business_name = serializers.SerializerMethodField()
     email = serializers.EmailField(source='user.email', read_only=True)
     phone = serializers.CharField(source='user.phone', read_only=True)
     status = serializers.SerializerMethodField()
+    crops = serializers.SerializerMethodField()
 
     class Meta:
         model = CooperativeMembership
         fields = [
-            'id', 'profile_pic_url', 'full_name', 'member_id', 
-            'role', 'role_display', 'location', 'business_name',
-            'email', 'phone', 'status'
+            'id', 'profile_pic_url', 'full_name', 'member_id',
+            'role', 'role_display', 'user_role', 'location', 'city', 'state', 'business_name',
+            'email', 'phone', 'status', 'crops'
         ]
 
     def get_location(self, obj):
@@ -62,3 +68,11 @@ class CooperativeMemberDetailSerializer(serializers.ModelSerializer):
 
     def get_status(self, obj):
         return "Active" if obj.user.is_active else "Inactive"
+
+    def get_crops(self, obj):
+        user = obj.user
+        if user.role == 'farmer':
+            # Return actual inventory items so buyers can place orders
+            crops = Crop.objects.filter(farmer__user=user)
+            return CropSerializer(crops, many=True).data
+        return []

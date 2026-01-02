@@ -11,6 +11,11 @@ class CooperativeViewSet(viewsets.ModelViewSet):
     serializer_class = CooperativeSerializer
     permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
 
+    def get_permissions(self):
+        if self.action in ['join', 'members']:
+            return [permissions.IsAuthenticated()]
+        return [permissions.IsAuthenticated(), IsOwnerOrReadOnly()]
+
     def perform_create(self, serializer):
         # Create the cooperative
         cooperative = serializer.save(created_by=self.request.user)
