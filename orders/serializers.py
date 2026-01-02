@@ -16,7 +16,7 @@ class OrderSerializer(serializers.ModelSerializer):
             'total_price', 'status', 'delivery_address', 'notes', 
             'created_at', 'updated_at'
         ]
-        read_only_fields = ['buyer', 'status', 'total_price']
+        read_only_fields = ['buyer', 'farmer', 'status', 'total_price', 'created_at', 'updated_at']
 
     def validate(self, data):
         crop = data.get('crop')
