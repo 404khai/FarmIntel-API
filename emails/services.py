@@ -267,3 +267,31 @@ The FarmIntel Team
             logger.error(f"Failed to send payment success emails: {str(e)}")
             # Don't fail the transaction if email fails, but log it.
             return False
+
+    @staticmethod
+    def send_out_of_stock_email(crop):
+        """Send notification to farmer when crop goes out of stock."""
+        try:
+            subject = f"Stock Alert: {crop.name} is Sold Out! 📢"
+            context = {
+                'crop': crop,
+                'farmer': crop.farmer.user,
+                'app_url': getattr(settings, 'APP_URL', 'https://farmintel.com'),
+                'current_year': 2025,
+            }
+            html_content = render_to_string('emails/out_of_stock_email.html', context)
+            text_content = strip_tags(html_content)
+            
+            email = EmailMultiAlternatives(
+                subject=subject,
+                body=text_content,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[crop.farmer.user.email]
+            )
+            email.attach_alternative(html_content, "text/html")
+            EmailService._attach_logo(email)
+            email.send(fail_silently=False)
+            return True
+        except Exception as e:
+            logger.error(f"Failed to send out of stock email: {str(e)}")
+            return False

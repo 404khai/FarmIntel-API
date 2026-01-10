@@ -74,6 +74,10 @@ class InitializeOrderPaymentView(APIView):
         if order.status != 'ACCEPTED':
             return Response({"error": "Order must be accepted by farmer before payment."}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Check if crop is still available
+        if order.quantity > order.crop.quantity_kg:
+             return Response({"error": "Insufficient stock available for this order."}, status=status.HTTP_400_BAD_REQUEST)
+
         # Platform Fee
         PLATFORM_FEE = Decimal("200.00")
         total_amount = order.total_price + PLATFORM_FEE
@@ -131,6 +135,14 @@ class VerifyOrderPaymentView(APIView):
                         # Update crop quantity
                         crop = order.crop
                         crop.quantity_kg -= order.quantity
+                        if crop.quantity_kg <= 0:
+                            crop.quantity_kg = 0
+                            crop.status = "sold out"
+                            # Notify farmer about out of stock
+                            try:
+                                EmailService.send_out_of_stock_email(crop)
+                            except Exception as e:
+                                print(f"OOS Email sending failed: {e}")
                         crop.save()
                         
                         # Update farmer wallet and create financial transaction
