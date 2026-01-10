@@ -8,6 +8,7 @@ from crops.models import Crop
 from billing.utils import initialize_transaction, verify_transaction
 from emails.services import EmailService
 from django.conf import settings
+from decimal import Decimal
 import uuid
 
 class PlaceOrderView(generics.CreateAPIView):
@@ -72,16 +73,20 @@ class InitializeOrderPaymentView(APIView):
         if order.status != 'ACCEPTED':
             return Response({"error": "Order must be accepted by farmer before payment."}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Platform Fee
+        PLATFORM_FEE = Decimal("200.00")
+        total_amount = order.total_price + PLATFORM_FEE
+
         # Use smallest unit (kobo for NGN)
-        amount_kobo = int(order.total_price * 100)
+        amount_kobo = int(total_amount * 100)
         reference = f"ORD_{uuid.uuid4().hex[:12]}"
         
-        # Create Transaction record
+        # Create Transaction record (tracking the total amount to be paid)
         OrderTransaction.objects.create(
             order=order,
             buyer=request.user,
             reference=reference,
-            amount=order.total_price,
+            amount=total_amount,
             status="INITIALIZED"
         )
 
@@ -144,7 +149,10 @@ class VerifyOrderPaymentView(APIView):
                         )
                         
                         # Notify farmer of payment
-                        EmailService.send_payment_success_email(order)
+                        try:
+                            EmailService.send_payment_success_email(order)
+                        except Exception as e:
+                            print(f"Email sending failed: {e}")
                 
                 return Response({"message": "Payment verified successfully."})
             else:
