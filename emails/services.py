@@ -212,28 +212,58 @@ The FarmIntel Team
 
     @staticmethod
     def send_payment_success_email(order):
-        """Send notification to farmer when buyer makes payment."""
+        """Send notification to farmer and buyer when payment is successful."""
         try:
-            subject = f"Payment Received for Order #{order.id} 💰"
-            context = {
+            # 1. Send Email to Farmer
+            subject_farmer = f"Payment Received for Order #{order.id} 💰"
+            context_farmer = {
                 'order': order,
                 'farmer': order.farmer.user,
                 'app_url': getattr(settings, 'APP_URL', 'https://farmintel.com'),
                 'current_year': 2025,
             }
-            html_content = render_to_string('emails/payment_success_email.html', context)
-            text_content = strip_tags(html_content)
+            html_content_farmer = render_to_string('emails/payment_success_email.html', context_farmer)
+            text_content_farmer = strip_tags(html_content_farmer)
             
-            email = EmailMultiAlternatives(
-                subject=subject,
-                body=text_content,
+            email_farmer = EmailMultiAlternatives(
+                subject=subject_farmer,
+                body=text_content_farmer,
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 to=[order.farmer.user.email]
             )
-            email.attach_alternative(html_content, "text/html")
-            EmailService._attach_logo(email)
-            email.send(fail_silently=False)
+            email_farmer.attach_alternative(html_content_farmer, "text/html")
+            EmailService._attach_logo(email_farmer)
+            email_farmer.send(fail_silently=False)
+
+            # 2. Send Email to Buyer
+            subject_buyer = f"Payment Successful for Order #{order.id} 🎉"
+            # Get transaction reference if possible (usually last transaction)
+            reference = "N/A"
+            if hasattr(order, 'transactions') and order.transactions.exists():
+                reference = order.transactions.last().reference
+                
+            context_buyer = {
+                'order': order,
+                'buyer': order.buyer,
+                'reference': reference,
+                'app_url': getattr(settings, 'APP_URL', 'https://farmintel.com'),
+                'current_year': 2025,
+            }
+            html_content_buyer = render_to_string('emails/payment_success_buyer_email.html', context_buyer)
+            text_content_buyer = strip_tags(html_content_buyer)
+            
+            email_buyer = EmailMultiAlternatives(
+                subject=subject_buyer,
+                body=text_content_buyer,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[order.buyer.email]
+            )
+            email_buyer.attach_alternative(html_content_buyer, "text/html")
+            EmailService._attach_logo(email_buyer)
+            email_buyer.send(fail_silently=False)
+            
             return True
         except Exception as e:
-            logger.error(f"Failed to send payment success email: {str(e)}")
+            logger.error(f"Failed to send payment success emails: {str(e)}")
+            # Don't fail the transaction if email fails, but log it.
             return False

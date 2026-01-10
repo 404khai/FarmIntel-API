@@ -9,39 +9,30 @@
         .content { margin-bottom: 30px; }
         .order-details { background-color: #f9f9f9; padding: 15px; border-radius: 5px; }
         .footer { text-align: center; font-size: 12px; color: #777; }
-        .btn { display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; }
-        .accepted { color: #28a745; }
-        .declined { color: #dc3545; }
+        .btn { display: inline-block; padding: 10px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 5px; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <img src="cid:logo" alt="FarmIntel Logo" class="logo">
-            <h2>Order Status Update! 🔔</h2>
+            <h2>Payment Successful! 🎉</h2>
         </div>
         <div class="content">
             <p>Hello {{ buyer.first_name|default:"Buyer" }},</p>
-            <p>Your order for <strong>{{ order.crop.name }}</strong> has been 
-                <strong class="{% if status_action == 'accepted' %}accepted{% else %}declined{% endif %}">
-                    {{ status_action|upper }}
-                </strong> by the farmer.</p>
+            <p>Your payment for <strong>Order #{{ order.id }}</strong> ({{ order.crop.name }}) has been successfully processed.</p>
             
             <div class="order-details">
                 <p><strong>Order ID:</strong> #{{ order.id }}</p>
-                <p><strong>Crop:</strong> {{ order.crop.name }}</p>
                 <p><strong>Quantity:</strong> {{ order.quantity }} kg</p>
-                <p><strong>Total Price:</strong> ₦{{ order.total_price }}</p>
+                <p><strong>Amount Paid:</strong> ₦{{ order.total_price }}</p>
+                <p><strong>Transaction Ref:</strong> {{ reference }}</p>
             </div>
             
-            {% if status_action == 'accepted' %}
-            <p><strong>Please make payment immediately to secure your order.</strong> The stock is reserved for a limited time.</p>
+            <p>The farmer has been notified and will process your order shortly.</p>
             <p style="text-align: center;">
-                <a href="{{ app_url }}/dashboard/orders/{{ order.id }}" class="btn">Pay Now</a>
+                <a href="{{ app_url }}/dashboard/orders/{{ order.id }}" class="btn">View Order Status</a>
             </p>
-            {% else %}
-            <p>We're sorry, the farmer was unable to fulfill your order at this time.</p>
-            {% endif %}
         </div>
         <div class="footer">
             <p>&copy; {{ current_year }} FarmIntel. All rights reserved.</p>
