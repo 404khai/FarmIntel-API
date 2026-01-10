@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .logo { width: 150px; }
+        .content { margin-bottom: 30px; }
+        .alert-box { background-color: #fff3cd; color: #856404; padding: 15px; border-radius: 5px; border: 1px solid #ffeeba; text-align: center; }
+        .footer { text-align: center; font-size: 12px; color: #777; }
+        .btn { display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="cid:logo" alt="FarmIntel Logo" class="logo">
+            <h2>Stock Alert: Sold Out! 📢</h2>
+        </div>
+        <div class="content">
+            <p>Hello {{ farmer.first_name|default:"Farmer" }},</p>
+            
+            <div class="alert-box">
+                <p><strong>Action Required:</strong> Your crop <strong>{{ crop.name }}</strong> is now out of stock.</p>
+            </div>
+            
+            <p>The recent order has depleted the remaining quantity. The crop status has been automatically updated to <strong>Sold Out</strong>.</p>
+            
+            <p><strong>Crop Details:</strong></p>
+            <ul>
+                <li><strong>Name:</strong> {{ crop.name }}</li>
+                <li><strong>Variety:</strong> {{ crop.variety }}</li>
+                <li><strong>Current Quantity:</strong> 0 kg</li>
+            </ul>
+            
+            <p>If you have more stock available, please update your inventory to continue receiving orders.</p>
+            
+            <p style="text-align: center;">
+                <a href="{{ app_url }}/dashboard/crops/{{ crop.id }}" class="btn">Update Inventory</a>
+            </p>
+        </div>
+        <div class="footer">
+            <p>&copy; {{ current_year }} FarmIntel. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
