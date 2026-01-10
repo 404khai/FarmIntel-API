@@ -8,6 +8,7 @@ from crops.models import Crop
 from billing.utils import initialize_transaction, verify_transaction
 from emails.services import EmailService
 from django.conf import settings
+from django.utils import timezone
 from decimal import Decimal
 import uuid
 
@@ -120,6 +121,7 @@ class VerifyOrderPaymentView(APIView):
                     if tx.status != "SUCCESS":
                         tx.status = "SUCCESS"
                         tx.paystack_response = verification_resp
+                        tx.verified_at = timezone.now()
                         tx.save()
                         
                         order = tx.order
@@ -134,7 +136,7 @@ class VerifyOrderPaymentView(APIView):
                         # Update farmer wallet and create financial transaction
                         farmer = order.farmer
                         wallet, _ = Wallet.objects.get_or_create(farmer=farmer)
-                        wallet.balance += order.total_price
+                        wallet.balance = Decimal(str(wallet.balance)) + order.total_price
                         wallet.save()
                         
                         FinancialTransaction.objects.create(
