@@ -7,16 +7,15 @@ class WeatherAnalyticsService:
 
     @staticmethod
     def get_coordinates(city, state=None, country=None):
-        """Convert city, state, country into lat/lon."""
-        query = city
-        if state:
-            query += f", {state}"
-        if country:
-            query += f", {country}"
-
+        """Convert city, state, country into lat/lon using Open-Meteo Geocoding API."""
+        # Open-Meteo searches by 'name' (city) primarily. 
+        # Adding state/country to the name often fails if the format isn't exact.
+        # It's safer to search by city name and filter/trust the top result, 
+        # or rely on the API's relevance sorting.
+        
         params = {
-            "name": query,
-            "count": 1,
+            "name": city,
+            "count": 5,
             "language": "en",
             "format": "json"
         }
@@ -27,6 +26,8 @@ class WeatherAnalyticsService:
             data = response.json()
             
             if "results" in data and len(data["results"]) > 0:
+                # Ideally, we could filter results by country_code if user.country is an ISO code
+                # For now, take the top result as it's usually the most relevant major city
                 result = data["results"][0]
                 return result["latitude"], result["longitude"]
         except Exception as e:
